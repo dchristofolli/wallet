@@ -1,0 +1,569 @@
+openapi: 3.0.3
+info:
+  title: Wallet API
+  description: |
+    API REST para o sistema Wallet (Carteira Digital).
+    
+    O sistema permite criar carteiras digitais, consultar saldos, transferir valores entre carteiras
+    e consultar extrato de transações. Todas as operações financeiras garantem consistência ACID.
+    
+    ## Funcionalidades
+    - Criar carteira digital
+    - Consultar carteira e saldo
+    - Transferir valor entre carteiras
+    - Consultar extrato de transações
+    
+    ## Controle de Concorrência
+    A API utiliza lock otimista (`@Version`) para detectar conflitos de concorrência.
+    Em caso de conflito, o endpoint retorna `409 Conflict` e o cliente pode retry a operação.
+    
+    ## Versionamento
+    A API utiliza versionamento por URL (`/api/v1/`). Versões futuras serão adicionadas
+    sem quebrar clientes existentes.
+  version: 1.0.0
+  contact:
+    name: Wallet API Support
+    email: support@wallet.example.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Servidor local de desenvolvimento
+  - url: https://wallet-api.example.com/api/v1
+    description: Servidor de produção (futuro)
+
+tags:
+  - name: wallets
+    description: Operações relacionadas a carteiras digitais
+  - name: transactions
+    description: Operações relacionadas a transações e transferências
+
+paths:
+  /wallets:
+    post:
+      tags:
+        - wallets
+      summary: Criar uma nova carteira
+      description: |
+        Cadastra uma nova carteira digital com identificador único (UUID).
+        O saldo inicial é zero e a versão para lock otimista começa em 0.
+      
+      operationId: createWallet
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWalletRequest'
+            example:
+              ownerName: "João Silva"
+              ownerEmail: "joao.silva@example.com"
+      
+      responses:
+        '201':
+          description: Carteira criada com sucesso
+          headers:
+            Location:
+              description: URL da carteira criada
+              schema:
+                type: string
+                format: uri
+              example: /api/v1/wallets/550e8400-e29b-41d4-a716-446655440000
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                ownerName: "João Silva"
+                ownerEmail: "joao.silva@example.com"
+                balance: 0.00
+                createdAt: "2026-11-07T18:00:00"
+                updatedAt: "2026-11-07T18:00:00"
+        '400':
+          description: Dados de entrada inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 400
+                error: "Bad Request"
+                message: "O campo 'ownerName' é obrigatório e deve ter entre 3 e 100 caracteres"
+                timestamp: "2026-11-07T18:00:00"
+        '409':
+          description: Email já cadastrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 409
+                error: "Conflict"
+                message: "Já existe uma carteira com o email 'joao.silva@example.com'"
+                timestamp: "2026-11-07T18:00:00"
+
+  /wallets/{walletId}:
+    get:
+      tags:
+        - wallets
+      summary: Consultar uma carteira
+      description: |
+        Retorna os dados de uma carteira específica, incluindo o saldo atual.
+        O saldo é materializado na tabela `wallets` e atualizado em cada transação.
+      
+      operationId: getWalletById
+      
+      parameters:
+        - name: walletId
+          in: path
+          description: Identificador único da carteira (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+      
+      responses:
+        '200':
+          description: Carteira encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletResponse'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                ownerName: "João Silva"
+                ownerEmail: "joao.silva@example.com"
+                balance: 150.50
+                createdAt: "2026-11-07T18:00:00"
+                updatedAt: "2026-11-07T19:30:00"
+        '404':
+          description: Carteira não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 404
+                error: "Not Found"
+                message: "Carteira com ID '550e8400-e29b-41d4-a716-446655440000' não encontrada"
+                timestamp: "2026-11-07T18:00:00"
+
+  /wallets/{walletId}/transactions:
+    get:
+      tags:
+        - wallets
+      summary: Consultar extrato de transações
+      description: |
+        Retorna a lista de transações de uma carteira em ordem cronológica decrescente
+        (mais recente primeiro). Suporta paginação simples via parâmetros `page` e `size`.
+      
+      operationId: getWalletTransactions
+      
+      parameters:
+        - name: walletId
+          in: path
+          description: Identificador único da carteira (UUID)
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        - name: page
+          in: query
+          description: Número da página (zero-based)
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+        - name: size
+          in: query
+          description: Quantidade de itens por página
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 20
+      
+      responses:
+        '200':
+          description: Lista de transações
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionListResponse'
+              example:
+                transactions:
+                  - id: "660e8400-e29b-41d4-a716-446655440001"
+                    walletId: "550e8400-e29b-41d4-a716-446655440000"
+                    type: "CREDIT"
+                    amount: 200.00
+                    description: "Transferência de 770e8400-e29b-41d4-a716-446655440002"
+                    createdAt: "2026-11-07T19:30:00"
+                  - id: "660e8400-e29b-41d4-a716-446655440002"
+                    walletId: "550e8400-e29b-41d4-a716-446655440000"
+                    type: "DEBIT"
+                    amount: 50.00
+                    description: "Transferência para 770e8400-e29b-41d4-a716-446655440002"
+                    createdAt: "2026-11-07T18:45:00"
+                page: 0
+                size: 20
+                totalElements: 2
+                totalPages: 1
+        '404':
+          description: Carteira não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 404
+                error: "Not Found"
+                message: "Carteira com ID '550e8400-e29b-41d4-a716-446655440000' não encontrada"
+                timestamp: "2026-11-07T18:00:00"
+
+  /transactions/transfer:
+    post:
+      tags:
+        - transactions
+      summary: Transferir valor entre carteiras
+      description: |
+        Transfere um valor da carteira de origem para a carteira de destino.
+        
+        A operação é **atômica**: ou ambas as carteiras são atualizadas, ou nenhuma é.
+        Em caso de conflito de concorrência (duas transferências simultâneas na mesma carteira),
+        o endpoint retorna `409 Conflict` e o cliente deve retry a operação.
+        
+        ### Regras de Negócio
+        - Ambas as carteiras devem existir
+        - A carteira de origem deve ter saldo suficiente
+        - O valor deve ser positivo e maior que zero
+        - Uma carteira não pode transferir para si mesma
+      
+      operationId: transfer
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequest'
+            example:
+              sourceWalletId: "550e8400-e29b-41d4-a716-446655440000"
+              destinationWalletId: "770e8400-e29b-41d4-a716-446655440002"
+              amount: 50.00
+      
+      responses:
+        '200':
+          description: Transferência realizada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResponse'
+              example:
+                id: "880e8400-e29b-41d4-a716-446655440003"
+                sourceWalletId: "550e8400-e29b-41d4-a716-446655440000"
+                destinationWalletId: "770e8400-e29b-41d4-a716-446655440002"
+                amount: 50.00
+                sourceBalance: 100.50
+                destinationBalance: 250.00
+                createdAt: "2026-11-07T19:30:00"
+        '400':
+          description: Dados de entrada inválidos ou saldo insuficiente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidAmount:
+                  summary: Valor inválido
+                  value:
+                    status: 400
+                    error: "Bad Request"
+                    message: "O valor da transferência deve ser positivo e maior que zero"
+                    timestamp: "2026-11-07T18:00:00"
+                insufficientBalance:
+                  summary: Saldo insuficiente
+                  value:
+                    status: 400
+                    error: "Bad Request"
+                    message: "Saldo insuficiente na carteira de origem"
+                    timestamp: "2026-11-07T18:00:00"
+                sameWallet:
+                  summary: Mesma carteira
+                  value:
+                    status: 400
+                    error: "Bad Request"
+                    message: "Não é possível transferir para a mesma carteira"
+                    timestamp: "2026-11-07T18:00:00"
+        '404':
+          description: Carteira não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 404
+                error: "Not Found"
+                message: "Carteira de origem com ID '550e8400-e29b-41d4-a716-446655440000' não encontrada"
+                timestamp: "2026-11-07T18:00:00"
+        '409':
+          description: Conflito de concorrência
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: 409
+                error: "Conflict"
+                message: "Conflito de concorrência detectado. Tente novamente."
+                timestamp: "2026-11-07T18:00:00"
+
+components:
+  schemas:
+    CreateWalletRequest:
+      type: object
+      required:
+        - ownerName
+        - ownerEmail
+      properties:
+        ownerName:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Nome do proprietário da carteira
+          example: "João Silva"
+        ownerEmail:
+          type: string
+          format: email
+          minLength: 5
+          maxLength: 255
+          description: Email do proprietário (deve ser único)
+          example: "joao.silva@example.com"
+
+    WalletResponse:
+      type: object
+      required:
+        - id
+        - ownerName
+        - ownerEmail
+        - balance
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único da carteira
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        ownerName:
+          type: string
+          description: Nome do proprietário
+          example: "João Silva"
+        ownerEmail:
+          type: string
+          format: email
+          description: Email do proprietário
+          example: "joao.silva@example.com"
+        balance:
+          type: number
+          format: double
+          description: Saldo atual da carteira
+          example: 150.50
+        createdAt:
+          type: string
+          format: date-time
+          description: Data de criação da carteira (ISO 8601)
+          example: "2026-11-07T18:00:00"
+        updatedAt:
+          type: string
+          format: date-time
+          description: Data da última atualização (ISO 8601)
+          example: "2026-11-07T19:30:00"
+
+    Transaction:
+      type: object
+      required:
+        - id
+        - walletId
+        - type
+        - amount
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único da transação
+          example: "660e8400-e29b-41d4-a716-446655440001"
+        walletId:
+          type: string
+          format: uuid
+          description: Identificador da carteira associada
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        type:
+          type: string
+          enum:
+            - CREDIT
+            - DEBIT
+          description: Tipo de transação (CREDIT = entrada, DEBIT = saída)
+          example: "CREDIT"
+        amount:
+          type: number
+          format: double
+          description: Valor da transação (sempre positivo)
+          example: 200.00
+        description:
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Descrição opcional da transação
+          example: "Transferência de 770e8400-e29b-41d4-a716-446655440002"
+        createdAt:
+          type: string
+          format: date-time
+          description: Data da transação (ISO 8601)
+          example: "2026-11-07T19:30:00"
+
+    TransactionListResponse:
+      type: object
+      required:
+        - transactions
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        transactions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+          description: Lista de transações
+        page:
+          type: integer
+          description: Número da página atual (zero-based)
+          example: 0
+        size:
+          type: integer
+          description: Quantidade de itens por página
+          example: 20
+        totalElements:
+          type: integer
+          description: Total de transações
+          example: 2
+        totalPages:
+          type: integer
+          description: Total de páginas
+          example: 1
+
+    TransferRequest:
+      type: object
+      required:
+        - sourceWalletId
+        - destinationWalletId
+        - amount
+      properties:
+        sourceWalletId:
+          type: string
+          format: uuid
+          description: Identificador da carteira de origem
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        destinationWalletId:
+          type: string
+          format: uuid
+          description: Identificador da carteira de destino
+          example: "770e8400-e29b-41d4-a716-446655440002"
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+          exclusiveMinimum: false
+          description: Valor a ser transferido (deve ser positivo)
+          example: 50.00
+
+    TransferResponse:
+      type: object
+      required:
+        - id
+        - sourceWalletId
+        - destinationWalletId
+        - amount
+        - sourceBalance
+        - destinationBalance
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador único da transferência
+          example: "880e8400-e29b-41d4-a716-446655440003"
+        sourceWalletId:
+          type: string
+          format: uuid
+          description: Identificador da carteira de origem
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        destinationWalletId:
+          type: string
+          format: uuid
+          description: Identificador da carteira de destino
+          example: "770e8400-e29b-41d4-a716-446655440002"
+        amount:
+          type: number
+          format: double
+          description: Valor transferido
+          example: 50.00
+        sourceBalance:
+          type: number
+          format: double
+          description: Saldo da carteira de origem após a transferência
+          example: 100.50
+        destinationBalance:
+          type: number
+          format: double
+          description: Saldo da carteira de destino após a transferência
+          example: 250.00
+        createdAt:
+          type: string
+          format: date-time
+          description: Data da transferência (ISO 8601)
+          example: "2026-11-07T19:30:00"
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - error
+        - message
+        - timestamp
+      properties:
+        status:
+          type: integer
+          description: Código HTTP de erro
+          example: 400
+        error:
+          type: string
+          description: Título curto do erro
+          example: "Bad Request"
+        message:
+          type: string
+          description: Descrição detalhada do erro
+          example: "O campo 'ownerName' é obrigatório"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp do erro (ISO 8601)
+          example: "2026-11-07T18:00:00"
+
+  securitySchemes:
+    # Futuro: autenticação via Bearer token
+    # BearerAuth:
+    #   type: http
+    #   scheme: bearer
+    #   bearerFormat: JWT
+
+# security:
+#   - BearerAuth: []
