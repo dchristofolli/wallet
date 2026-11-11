@@ -15,37 +15,6 @@
 | DevOps | Docker, GitHub Actions (CI/CD) |
 | Testing | JUnit 5, Testcontainers, JMeter/Gatling |
 
-## 8-Week Roadmap
-
-### Weeks 1-2: Foundations & Design
-- System architecture and ADRs (Architecture Decision Records)
-- API contracts (OpenAPI/Swagger - Contract-First)
-- Data modeling and concurrency strategies
-
-### Week 3: Spring Boot Project Setup
-- Entities, repositories, and basic endpoints (create and query wallets)
-
-### Week 4: Transfers & Concurrency
-- ACID-compliant transfers with optimistic/pessimistic locking
-- Concurrency handling and conflict resolution
-
-### Week 5: Testing & Transaction History
-- Unit and integration tests with Testcontainers
-- Transaction statement endpoint
-
-### Week 6: Buffer & Refinement
-- Buffer week to absorb implementation surprises from weeks 3-5
-- Complementary study (Effective Java)
-
-### Week 7: Async Messaging & Docker
-- Event-driven messaging with Apache Kafka
-- Docker Compose setup (app + DB + Kafka)
-
-### Week 8: CI/CD, Load Testing & Polish
-- CI/CD pipeline with GitHub Actions
-- Load testing with JMeter
-- Final polish and technical documentation
-
 ## Key Technical Focus Areas
 
 - **Architecture & Integration**: System design, ADRs, technical trade-offs
