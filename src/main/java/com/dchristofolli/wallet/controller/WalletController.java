@@ -4,6 +4,7 @@ import com.dchristofolli.wallet.dto.CreateWalletRequest;
 import com.dchristofolli.wallet.dto.WalletResponse;
 import com.dchristofolli.wallet.service.WalletService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -18,6 +19,7 @@ public class WalletController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public WalletResponse createWallet(@Valid @RequestBody CreateWalletRequest createWalletRequest) {
         return walletService.createWallet(createWalletRequest);
     }
