@@ -46,6 +46,16 @@ public class Wallet {
         this.balance = BigDecimal.ZERO;
     }
 
+    public Wallet(UUID id, Long version, String ownerName, String ownerEmail, BigDecimal balance, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.version = version;
+        this.ownerName = ownerName;
+        this.ownerEmail = ownerEmail;
+        this.balance = balance;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
     public UUID getId() {
         return id;
     }
