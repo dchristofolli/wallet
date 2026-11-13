@@ -73,7 +73,11 @@ class WalletControllerIntegrationTest {
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(request)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status", is(409)))
+                .andExpect(jsonPath("$.error", is("Conflict")))
+                .andExpect(jsonPath("$.message", is(notNullValue())))
+                .andExpect(jsonPath("$.timestamp", is(notNullValue())));
     }
 
     @Test
@@ -83,7 +87,11 @@ class WalletControllerIntegrationTest {
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is(notNullValue())))
+                .andExpect(jsonPath("$.timestamp", is(notNullValue())));
     }
 
     @Test
@@ -93,7 +101,11 @@ class WalletControllerIntegrationTest {
         mockMvc.perform(post("/wallets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status", is(400)))
+                .andExpect(jsonPath("$.error", is("Bad Request")))
+                .andExpect(jsonPath("$.message", is(notNullValue())))
+                .andExpect(jsonPath("$.timestamp", is(notNullValue())));
     }
 
     @Test
@@ -122,7 +134,11 @@ class WalletControllerIntegrationTest {
         String nonExistentId = "00000000-0000-0000-0000-000000000000";
 
         mockMvc.perform(get("/wallets/{walletId}", nonExistentId))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status", is(404)))
+                .andExpect(jsonPath("$.error", is("Not Found")))
+                .andExpect(jsonPath("$.message", is(notNullValue())))
+                .andExpect(jsonPath("$.timestamp", is(notNullValue())));
     }
 
     private static String asJsonString(Object obj) {
