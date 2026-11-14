@@ -25,13 +25,13 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(DuplicateEntityException.class)
+    @ExceptionHandler(DuplicateKeyException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleDuplicateEntity(DuplicateEntityException ex) {
+    public ErrorResponse handleDuplicateKeyException() {
         return new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "Conflict",
-                ex.getMessage(),
+                "A resource with this identifier already exists.",
                 LocalDateTime.now().toString()
         );
     }
@@ -64,11 +64,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    public ErrorResponse handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+    public ErrorResponse handleDataIntegrityViolation() {
         return new ErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 "Conflict",
-                "Data integrity violation: " + ex.getMessage(),
+                "Data integrity violation.",
                 LocalDateTime.now().toString()
         );
     }

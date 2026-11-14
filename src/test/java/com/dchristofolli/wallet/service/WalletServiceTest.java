@@ -3,7 +3,7 @@ package com.dchristofolli.wallet.service;
 import com.dchristofolli.wallet.dto.CreateWalletRequest;
 import com.dchristofolli.wallet.dto.WalletResponse;
 import com.dchristofolli.wallet.entity.Wallet;
-import com.dchristofolli.wallet.exception.DuplicateEntityException;
+import com.dchristofolli.wallet.exception.DuplicateKeyException;
 import com.dchristofolli.wallet.exception.ResourceNotFoundException;
 import com.dchristofolli.wallet.repository.WalletRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,12 +61,12 @@ class WalletServiceTest {
     }
 
     @Test
-    void createWallet_shouldThrowDuplicateEntityExceptionWhenEmailDuplicate() {
+    void createWallet_shouldThrowDuplicateKeyExceptionWhenEmailDuplicate() {
         when(walletRepository.save(any(Wallet.class)))
                 .thenThrow(new org.springframework.dao.DataIntegrityViolationException("Duplicate entry"));
 
         assertThatThrownBy(() -> walletService.createWallet(request))
-                .isInstanceOf(DuplicateEntityException.class);
+                .isInstanceOf(DuplicateKeyException.class);
     }
 
     @Test

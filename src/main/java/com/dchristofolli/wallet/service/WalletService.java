@@ -3,7 +3,7 @@ package com.dchristofolli.wallet.service;
 import com.dchristofolli.wallet.dto.CreateWalletRequest;
 import com.dchristofolli.wallet.dto.WalletResponse;
 import com.dchristofolli.wallet.entity.Wallet;
-import com.dchristofolli.wallet.exception.DuplicateEntityException;
+import com.dchristofolli.wallet.exception.DuplicateKeyException;
 import com.dchristofolli.wallet.exception.ResourceNotFoundException;
 import com.dchristofolli.wallet.repository.WalletRepository;
 import org.jspecify.annotations.NonNull;
@@ -27,7 +27,7 @@ public class WalletService {
         try {
             return mapToResponse(walletRepository.save(wallet));
         } catch (DataIntegrityViolationException e) {
-            throw new DuplicateEntityException(e.getMessage());
+            throw new DuplicateKeyException(e.getLocalizedMessage());
         }
     }
 
