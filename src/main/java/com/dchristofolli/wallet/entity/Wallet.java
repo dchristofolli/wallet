@@ -91,4 +91,8 @@ public class Wallet {
     public void setOwnerName(String ownerName) {
         this.ownerName = ownerName;
     }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
 }

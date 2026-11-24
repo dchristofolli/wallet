@@ -76,7 +76,7 @@ Defines services and messages in .proto files, generates code in multiple langua
 
 ## Proposed Workflow
 
-1. **Define contract** in `docs/api/openapi.yaml`
+1. **Define contract** in `src/main/resources/openapi.yml`
 2. **Review contract** with stakeholders (if applicable)
 3. **Generate code** or implement manually based on the contract
 4. **Validate implementation** against the contract with testing tools

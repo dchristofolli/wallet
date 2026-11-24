@@ -12,18 +12,20 @@ The MVP (Minimum Viable Product) of the Wallet system focuses on the **essential
 **Business Rules:**
 - `owner_name` is required and must be between 3 and 100 characters
 - `owner_email` is required, must be unique and valid
-- Initial balance is zero
+- An initial deposit is optional; if omitted, the initial balance is zero
+- The initial deposit must be zero or a positive amount with up to two decimal places
+- A positive initial deposit is recorded as a credit transaction atomically with wallet creation; a zero initial deposit creates no transaction
 - Wallet is created with `version = 0` for optimistic locking
 
 **Validations:**
 - Email already registered → 409 Conflict
-- Invalid fields → 400 Bad Request
+- Invalid fields or a negative initial deposit → 400 Bad Request
 
 ### 2. Query Wallet + Balance
 **Description:** Returns wallet data including the current balance.
 
 **Business Rules:**
-- Balance is calculated from registered transactions
+- Balance is calculated from registered transactions, including any initial deposit
 - Returns 404 if the wallet does not exist
 
 **Returned Data:**
@@ -93,7 +95,7 @@ COMMIT;
 | id | UUID | PRIMARY KEY | Unique wallet identifier |
 | owner_name | VARCHAR(100) | NOT NULL | Owner name |
 | owner_email | VARCHAR(255) | NOT NULL, UNIQUE | Owner email |
-| balance | DECIMAL(19, 2) | NOT NULL, DEFAULT 0.00 | Current wallet balance |
+| balance | DECIMAL(19, 2) | NOT NULL, DEFAULT 0.00 | Current wallet balance, including the initial deposit |
 | version | INTEGER | NOT NULL, DEFAULT 0 | Version for optimistic locking |
 | created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Creation date |
 | updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update date |
@@ -170,7 +172,7 @@ COMMIT;
 
 The following features are **not** part of the MVP and will be implemented in later phases:
 
-- **Value deposit** → Can be added in the future
+- **Subsequent deposits** → Deposits after wallet creation can be added in the future
 - **Value withdrawal** → Can be added in the future
 - **Multiple currencies** → Significant complexity, out of scope
 - **Cashback** → Requires async messaging (weeks 6-7)
@@ -184,14 +186,15 @@ The following features are **not** part of the MVP and will be implemented in la
 
 The MVP is complete when:
 
-1. [ ] It is possible to create a wallet via API
-2. [ ] It is possible to query a wallet and view the balance
-3. [ ] It is possible to transfer value between two wallets
-4. [ ] It is possible to query the transaction statement
-5. [ ] Transfers maintain ACID consistency
-6. [ ] Concurrency is handled correctly (no balance corruption)
-7. [ ] Integration tests pass with Testcontainers
-8. [ ] API documentation is available (Swagger UI)
+1. [ ] It is possible to create a wallet via API with an optional initial deposit
+2. [ ] A positive initial deposit is recorded as a credit and reflected in the wallet balance and statement
+3. [ ] It is possible to query a wallet and view the balance
+4. [ ] It is possible to transfer value between two wallets
+5. [ ] It is possible to query the transaction statement
+6. [ ] Transfers maintain ACID consistency
+7. [ ] Concurrency is handled correctly (no balance corruption)
+8. [ ] Integration tests pass with Testcontainers
+9. [ ] API documentation is available (Swagger UI)
 
 ## References
 - [ADR-001: Database Choice](ADR-001-database-choice.md)

@@ -65,7 +65,7 @@ Replaces external dependencies with mocked objects.
 ### Positive
 - Reliable integration tests with real PostgreSQL
 - Real validation of ACID transactions and concurrency control
-- Preparation for messaging tests with real RabbitMQ
+- Preparation for messaging tests with real Kafka
 - Demonstration of DevOps and modern testing skills
 - Minimal gap between test and production environments
 
@@ -112,7 +112,7 @@ class WalletServiceIntegrationTest {
     @Test
     void shouldTransferBetweenWallets() {
         // Given
-        Wallet source = walletService.createWallet("Source", "source@test.com");
+        Wallet source = walletService.createWallet("Source", "source@test.com", BigDecimal.TEN);
         Wallet destination = walletService.createWallet("Dest", "dest@test.com");
 
         // When

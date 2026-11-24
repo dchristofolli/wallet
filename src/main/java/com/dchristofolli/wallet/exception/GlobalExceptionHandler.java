@@ -73,14 +73,14 @@ public class GlobalExceptionHandler {
         );
     }
 
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponse handleGeneric() {
-        return new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected error occurred.",
-                LocalDateTime.now().toString()
-        );
-    }
+//    @ExceptionHandler(Exception.class)
+//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+//    public ErrorResponse handleGeneric() {
+//        return new ErrorResponse(
+//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//                "Internal Server Error",
+//                "An unexpected error occurred.",
+//                LocalDateTime.now().toString()
+//        );
+//    }
 }

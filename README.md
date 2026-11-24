@@ -34,7 +34,7 @@
 - [ADR-007: Data Access Library](docs/ADR-007-data-access-library.md)
 - [System Architecture](docs/architecture.md)
 - [MVP Scope](docs/mvp.md)
-- [OpenAPI Specification](docs/api/openapi.yaml)
+- [OpenAPI Specification](src/main/resources/openapi.yml)
 
 ## MVP Scope
 

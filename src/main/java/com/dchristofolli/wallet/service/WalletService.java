@@ -24,6 +24,7 @@ public class WalletService {
         var wallet = new Wallet();
         wallet.setOwnerName(createWalletRequest.ownerName());
         wallet.setOwnerEmail(createWalletRequest.ownerEmail());
+        wallet.setBalance(createWalletRequest.initialBalance());
         try {
             return mapToResponse(walletRepository.save(wallet));
         } catch (DataIntegrityViolationException e) {
@@ -38,6 +39,7 @@ public class WalletService {
     }
 
     private static @NonNull WalletResponse mapToResponse(Wallet saved) {
-        return new WalletResponse(saved.getId(), saved.getOwnerName(), saved.getOwnerEmail(), saved.getBalance(), saved.getCreatedAt(), saved.getUpdatedAt());
+        return new WalletResponse(saved.getId(), saved.getOwnerName(), saved.getOwnerEmail(),
+                saved.getBalance().toString(), saved.getCreatedAt(), saved.getUpdatedAt());
     }
 }
